@@ -1,0 +1,33 @@
+# IntelliJ and Eclipse
+.idea/
+*.iml
+*.iws
+.project
+.classpath
+.settings/
+
+# OS-generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Build directories
+build/
+bin/
+out/
+target/
+.gradle/
+!gradle/wrapper/gradle-wrapper.jar
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.backup
+
+# Env files
+.env
+.env.local
