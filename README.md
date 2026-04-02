@@ -17,7 +17,13 @@ An event-driven Notification System built to showcase architectural and engineer
 - `docs/`: Contribution guidelines and system design documents.
 
 ## Local Setup
-Ensure you have Docker installed and running. Start the entire dependent stack (Database, Mock AWS environment): 
+1. **Environment Configuration**: Because this project enforces strict credential security, you must create a local environment file before starting the infrastructure.
+   ```bash
+   cp .env.example .env
+   ```
+   *(Feel free to edit `.env` to set your own passwords. Since it is in `.gitignore`, it will never be committed to Git).*
+
+2. **Start the Infrastructure**: Ensure you have Docker installed and running. Start the entire dependent stack (Database, Mock AWS environment, pgAdmin): 
 ```bash
 docker-compose up -d
 ```
