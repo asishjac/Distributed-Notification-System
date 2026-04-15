@@ -2,21 +2,6 @@
 
 An event-driven notification system showcasing production-grade architecture built entirely with modern, cloud-native tooling. Every component — from the reactive HTTP layer to the serverless worker to the AWS infrastructure — follows industry best practices.
 
-![Dashboard Preview](screenshots/dashboard_demo.png)
-
-## Tech Stack
-
-| Layer | Technology |
-|---|---|
-| **API Gateway** | Kotlin + Spring Boot (WebFlux + Coroutines) |
-| **Message Queue** | Amazon SQS (via LocalStack) |
-| **Delivery Worker** | AWS Lambda — pure Kotlin, no framework |
-| **Relational DB** | PostgreSQL via R2DBC (non-blocking) |
-| **NoSQL DB** | Amazon DynamoDB — append-only delivery logs |
-| **Infrastructure** | Terraform (IaC) via Docker |
-| **Local AWS** | LocalStack — full local AWS sandbox |
-| **Testing** | JUnit 5, MockK, Testcontainers |
-
 ## Architecture
 
 ```mermaid
@@ -28,6 +13,19 @@ graph LR
     Lambda -- "Log status" --> Dynamo[(DynamoDB)]
 ```
 
+## Tech Stack
+
+| Layer | Technology |
+|---|---|
+| **API Gateway** | Kotlin + Spring Boot (WebFlux + Coroutines) |
+| **Message Queue** | Amazon SQS (via LocalStack 3.4) |
+| **Delivery Worker** | AWS Lambda — pure Kotlin (JVM 21) |
+| **Relational DB** | PostgreSQL via R2DBC (non-blocking) |
+| **NoSQL DB** | Amazon DynamoDB — delivery logs |
+| **Infrastructure** | Terraform (IaC) via Docker |
+| **Local AWS** | LocalStack — full local AWS sandbox |
+| **Testing** | JUnit 5, MockK, Testcontainers |
+
 ## Senior-Level Implementation Highlights
 
 - **Reactive & Non-Blocking**: Leverages Kotlin Coroutines with Spring WebFlux and R2DBC to enable high-concurrency event ingestion with minimal memory footprint.
@@ -35,6 +33,8 @@ graph LR
 - **Polyglot Persistence**: Strategic use of PostgreSQL for ACID-compliant user preferences and DynamoDB for high-velocity, append-only delivery auditing.
 - **Infrastructure as Code (IaC)**: The entire local environment (SQS, Lambda, DynamoDB, IAM) is provisioned via Terraform, ensuring the local development experience mirrors production perfectly.
 - **Distributed Tracing**: Implements consistent `correlationId` and `traceId` propagation across service boundaries for end-to-end observability.
+
+---
 
 ## Local Setup & Demo
 
@@ -57,10 +57,16 @@ cd notification-gateway
 ### Step 3 — Open the Dashboard
 Open **[http://localhost:8081](http://localhost:8081)** to use the premium glassmorphic dashboard.
 
-![DynamoDB Verification](screenshots/dynamodb_logs.png)
-*Audit logs appearing in real-time within DynamoDB.*
+![Dashboard Preview](screenshots/dashboard_demo.png)
 
 ---
+
+## Observability & Audit Logs
+
+Once a notification is dispatched, you can verify its delivery status in real-time within the DynamoDB audit log.
+
+![DynamoDB Verification](screenshots/dynamodb_logs.png)
+*Audit logs appearing with unique Trace IDs for end-to-end tracking.*
 
 ## E2E Verification Script
 
