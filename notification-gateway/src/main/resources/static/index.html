@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Distributed Notification System | Portfolio Demo</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-glow: rgba(99, 102, 241, 0.4);
+            --bg: #0f172a;
+            --card-bg: rgba(30, 41, 59, 0.7);
+            --border: rgba(255, 255, 255, 0.1);
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --success: #10b981;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Outfit', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg);
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.15) 0px, transparent 50%),
+                radial-gradient(at 100% 0%, rgba(139, 92, 246, 0.15) 0px, transparent 50%);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 2rem;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 900px;
+            animation: fadeIn 0.8s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .glass-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 3rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(to right, #818cf8, #c084fc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .subtitle {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .grid { grid-template-columns: 1fr; }
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        input, textarea {
+            width: 100%;
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1rem;
+            color: white;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px var(--primary-glow);
+        }
+
+        button {
+            width: 100%;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 1rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px var(--primary-glow);
+            filter: brightness(1.1);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .response-container {
+            background: rgba(15, 23, 42, 0.8);
+            border-radius: 16px;
+            padding: 1.5rem;
+            border: 1px solid var(--border);
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        pre {
+            font-family: 'Monaco', 'Consolas', monospace;
+            font-size: 0.85rem;
+            color: #10b981;
+            overflow-x: auto;
+            flex-grow: 1;
+        }
+
+        .journey {
+            margin-top: 3rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+        }
+
+        .journey::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 10%;
+            right: 10%;
+            height: 2px;
+            background: var(--border);
+            z-index: 0;
+        }
+
+        .step {
+            width: 60px;
+            height: 60px;
+            background: var(--card-bg);
+            border: 2px solid var(--border);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1;
+            transition: all 0.5s ease;
+            position: relative;
+        }
+
+        .step.active {
+            border-color: var(--primary);
+            box-shadow: 0 0 20px var(--primary-glow);
+            background: var(--primary);
+        }
+
+        .step-label {
+            position: absolute;
+            top: 70px;
+            width: 120px;
+            text-align: center;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+            margin-bottom: 1rem;
+        }
+
+        .loader {
+            display: none;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+            margin-right: 10px;
+            vertical-align: middle;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="glass-card">
+            <header>
+                <div class="badge">SYSTEM ONLINE</div>
+                <h1>Notification Gateway</h1>
+                <p class="subtitle">Event-Driven Distribution Architecture Demo</p>
+            </header>
+
+            <div class="grid">
+                <div class="card-section">
+                    <form id="notifyForm">
+                        <div class="form-group">
+                            <label for="userId">User Identity</label>
+                            <input type="text" id="userId" value="user123" placeholder="Enter User ID" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="message">Notification Content</label>
+                            <textarea id="message" rows="4" placeholder="Type your message here..." required>Hello from the Portfolio Dashboard!</textarea>
+                        </div>
+                        <button type="submit" id="submitBtn">
+                            <span class="loader" id="loader"></span>
+                            Dispatch Event
+                        </button>
+                    </form>
+                </div>
+
+                <div class="card-section">
+                    <div class="response-container">
+                        <label>Ingestion Trace Result</label>
+                        <pre id="response">// Response will appear here after dispatch...</pre>
+                    </div>
+                </div>
+            </div>
+
+            <div class="journey" id="journey">
+                <div class="step active" id="step1">
+                    <span style="font-size: 1.5rem">🌐</span>
+                    <div class="step-label">API Gateway</div>
+                </div>
+                <div class="step" id="step2">
+                    <span style="font-size: 1.5rem">📥</span>
+                    <div class="step-label">SQS Queue</div>
+                </div>
+                <div class="step" id="step3">
+                    <span style="font-size: 1.5rem">⚡</span>
+                    <div class="step-label">Lambda Worker</div>
+                </div>
+                <div class="step" id="step4">
+                    <span style="font-size: 1.5rem">💾</span>
+                    <div class="step-label">DynamoDB Log</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const form = document.getElementById('notifyForm');
+        const responsePre = document.getElementById('response');
+        const submitBtn = document.getElementById('submitBtn');
+        const loader = document.getElementById('loader');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            // Reset journey
+            document.querySelectorAll('.step').forEach((s, i) => i > 0 && s.classList.remove('active'));
+            
+            const userId = document.getElementById('userId').value;
+            const message = document.getElementById('message').value;
+
+            // UI Feedback
+            submitBtn.disabled = true;
+            loader.style.display = 'inline-block';
+            responsePre.textContent = "Dispatching to gateway...";
+            
+            try {
+                const startTime = Date.now();
+                const response = await fetch('/api/v1/notifications', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Correlation-ID': 'web-demo-' + Math.floor(Math.random() * 1000)
+                    },
+                    body: JSON.stringify({ userId, message })
+                });
+
+                const data = await response.json();
+                const duration = Date.now() - startTime;
+
+                responsePre.textContent = JSON.stringify(data, null, 2);
+                
+                if (response.ok) {
+                    // Animate Journey
+                    animateJourney();
+                } else {
+                    responsePre.style.color = '#ef4444';
+                }
+
+            } catch (error) {
+                responsePre.textContent = "Network Error: " + error.message;
+                responsePre.style.color = '#ef4444';
+            } finally {
+                submitBtn.disabled = false;
+                loader.style.display = 'none';
+            }
+        });
+
+        function animateJourney() {
+            const steps = ['step1', 'step2', 'step3', 'step4'];
+            steps.forEach((id, index) => {
+                setTimeout(() => {
+                    document.getElementById(id).classList.add('active');
+                }, index * 400);
+            });
+        }
+    </script>
+</body>
+</html>

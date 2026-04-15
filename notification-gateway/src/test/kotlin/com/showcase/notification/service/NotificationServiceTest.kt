@@ -9,9 +9,9 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
-import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Test
 import java.util.UUID
+import kotlin.test.assertFailsWith
 
 class NotificationServiceTest {
 
@@ -52,10 +52,8 @@ class NotificationServiceTest {
         coEvery { preferencesRepository.findByUserId(userId) } returns null
 
         // Verify Exception is Thrown in Coroutine Context
-        assertThrows(IllegalArgumentException::class.java) {
-            runTest {
-                notificationService.sendNotification(userId, "Hello", "mock-correlation-id", "mock-trace-id")
-            }
+        assertFailsWith<IllegalArgumentException> {
+            notificationService.sendNotification(userId, "Hello", "mock-correlation-id", "mock-trace-id")
         }
         
         // Verify SQS was never called
