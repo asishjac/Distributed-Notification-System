@@ -1,5 +1,8 @@
 version: '3.8'
 services:
+  # ---------------------------------------------------------------------------
+  # PostgreSQL — Relational DB for User Preferences
+  # ---------------------------------------------------------------------------
   postgres:
     image: postgres:15-alpine
     container_name: shared_postgres
@@ -16,7 +19,12 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - notification_network
 
+  # ---------------------------------------------------------------------------
+  # pgAdmin — Web UI for PostgreSQL (http://localhost:5050)
+  # ---------------------------------------------------------------------------
   pgadmin:
     image: dpage/pgadmin4
     container_name: shared_pgadmin
@@ -26,16 +34,21 @@ services:
     ports:
       - "5050:80"
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
+    networks:
+      - notification_network
 
+  # ---------------------------------------------------------------------------
+  # LocalStack — Local AWS Sandbox (SQS, DynamoDB, Lambda, IAM)
+  # ---------------------------------------------------------------------------
   localstack:
-    image: localstack/localstack:3.0.0
+    image: localstack/localstack:3.4.0
     container_name: shared_localstack
     ports:
       - "127.0.0.1:4566:4566"            # LocalStack API Gateway
       - "127.0.0.1:4510-4559:4510-4559"  # External services port range
     environment:
-      - SERVICES=sqs,dynamodb,lambda,apigateway,s3,iam
       - DEBUG=1
       - DOCKER_HOST=unix:///var/run/docker.sock
       - AWS_DEFAULT_REGION=us-east-1
@@ -44,6 +57,84 @@ services:
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock"
       - "./localstack_data:/var/lib/localstack"
+    healthcheck:
+      test: ["CMD-SHELL", "awslocal sqs list-queues || exit 1"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+      start_period: 20s
+    networks:
+      - notification_network
+
+  # ---------------------------------------------------------------------------
+  # DynamoDB Admin — Web UI for DynamoDB (http://localhost:8001)
+  # ---------------------------------------------------------------------------
+  dynamodb-admin:
+    image: aaronshaf/dynamodb-admin
+    container_name: shared_dynamodb_admin
+    environment:
+      - DYNAMO_ENDPOINT=http://localstack:4566
+      - AWS_REGION=us-east-1
+      - AWS_ACCESS_KEY_ID=test
+      - AWS_SECRET_ACCESS_KEY=test
+    ports:
+      - "8001:8001"
+    depends_on:
+      localstack:
+        condition: service_healthy
+    networks:
+      - notification_network
+
+  # ---------------------------------------------------------------------------
+  # Terraform Provisioner — One-shot IaC runner
+  # ---------------------------------------------------------------------------
+  # This container uses the official hashicorp/terraform image to provision
+  # ALL AWS resources (SQS queue + DLQ, DynamoDB table, Lambda function, IAM
+  # roles/policies) against LocalStack using Infrastructure as Code.
+  #
+  # Lifecycle:
+  #   1. Waits for LocalStack to be healthy
+  #   2. Runs `terraform init` to download the AWS provider
+  #   3. Runs `terraform apply` to create all resources
+  #   4. Exits with code 0 — it is a one-shot provisioner, not a long-running service
+  #
+  # To re-run manually after making Terraform changes:
+  #   docker-compose run --rm terraform
+  # ---------------------------------------------------------------------------
+  terraform:
+    image: hashicorp/terraform:1.9
+    container_name: terraform_provisioner
+    working_dir: /infrastructure
+    volumes:
+      - ./infrastructure:/infrastructure                   # Terraform configs
+      - ./workers/delivery-worker/build/libs:/artifacts    # Shadow JAR for Lambda
+    environment:
+      - AWS_ACCESS_KEY_ID=test
+      - AWS_SECRET_ACCESS_KEY=test
+      - AWS_DEFAULT_REGION=us-east-1
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        echo "================================================"
+        echo "  TERRAFORM PROVISIONER: Starting..."
+        echo "================================================"
+        terraform init -input=false
+        terraform apply -auto-approve -input=false
+        echo "================================================"
+        echo "  TERRAFORM PROVISIONER: Done! Resources ready."
+        echo "================================================"
+    depends_on:
+      localstack:
+        condition: service_healthy
+    networks:
+      - notification_network
+    # Restart policy: 'no' — this is intentionally one-shot.
+    # If it fails, check: docker logs terraform_provisioner
+    restart: "no"
+
+networks:
+  notification_network:
+    driver: bridge
 
 volumes:
   pgdata:
