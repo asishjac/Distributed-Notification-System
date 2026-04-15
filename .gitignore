@@ -31,3 +31,14 @@ target/
 # Env files
 .env
 .env.local
+
+# LocalStack Data
+localstack_data/
+
+# Application Logs
+*.log
+**/app.log
+
+# Documentation Exclusions (Internal Guides)
+docs/*
+!docs/contributing.md
